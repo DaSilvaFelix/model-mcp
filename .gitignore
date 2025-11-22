@@ -1,0 +1,24 @@
+# --- 1. Seguridad (CRITICO) ---
+.env
+.env.local
+keys/
+*.key
+
+# --- 2. Entorno Virtual y Python ---
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- 3. Configuración de Editor/OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- 4. Logs o Bases de datos locales ---
+*.log
+*.sqlite3
