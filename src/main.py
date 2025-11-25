@@ -5,6 +5,7 @@ from src.routers.agentRouter import AgentRouter
 
 app = FastAPI()
 
+
 app.include_router(AgentRouter().router)
 
 try:
