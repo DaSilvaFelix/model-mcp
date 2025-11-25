@@ -1,4 +1,5 @@
 from langchain_core.tools import tool
+from typing import Literal
 from langchain_core.runnables import RunnableConfig
 from src.services.books import BookService
 from src.services.users import UserService
@@ -40,7 +41,7 @@ def getTheNewBooks(config: RunnableConfig, limit:int):
         return f"Error al obtener libros nuevos: {str(e)}"
 
 @tool(description="Busca libros por título, autor, género, tema, sinopsis o resumen. Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def searchBooks(config: RunnableConfig, query: str, limit: int = 10):
+def searchBooks(config: RunnableConfig, query: list[str] | str, limit: int = 10):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -94,7 +95,7 @@ def getRecommendation(config: RunnableConfig, limit: int = 10):
         return f"Error al obtener recomendaciones: {str(e)}"
 
 @tool(description="Busca libros de un género específico (Narrativo, Poesía, etc.). Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def getBooksByGenre(config: RunnableConfig, genre: str, limit: int = 10):
+def getBooksByGenre(config: RunnableConfig, genre: Literal["Narrativo", "Poesía"] = "Narrativo", limit: int = 10):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -174,6 +175,33 @@ def getAvailableGenres(config: RunnableConfig):
     except Exception as e:
         return f"Error al obtener géneros: {str(e)}"
 
+@tool(description="Ontiene los subgeneros literarios disponibles en la plataforma para el nivel de lectura del usuario.")
+def getAvailableSubGenres(config: RunnableConfig):
+    try:
+        configuration = config.get("configurable", {})
+        user_id = configuration.get("userId")
+        
+        if not user_id:
+            return "Error: No se pudo identificar al usuario."
+        
+        user_level = user_service.getUserLevel(user_id)
+        
+        if not user_level:
+            return "Error: No se pudo obtener el nivel de lectura del usuario."
+        
+        subgenres = book_service.getAvailableSubGenres(user_level=user_level)
+        
+        if isinstance(subgenres, dict) and subgenres.get("error"):
+            return subgenres.get("message")
+        
+        if not subgenres or len(subgenres) == 0:
+            return "No se encontraron subgéneros disponibles."
+        
+        return f"Subgéneros disponibles para tu nivel de lectura ({user_level}): {', '.join(subgenres)}"
+        
+    except Exception as e:
+        return f"Error al obtener subgéneros: {str(e)}"
+
 @tool(description="Obtiene los autores más populares (con más libros publicados) en la plataforma para el nivel de lectura del usuario.")
 def getPopularAuthors(config: RunnableConfig, limit: int = 10):
     try:
@@ -206,7 +234,7 @@ def getPopularAuthors(config: RunnableConfig, limit: int = 10):
         return f"Error al obtener autores populares: {str(e)}"
 
 @tool(description="Busca libros por formato (ebook, videobook, audiobook). Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def getBooksByFormat(config: RunnableConfig, format_type: str, limit: int = 10):
+def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "videobook", "audiobook"] = "ebook", limit: int = 10):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")

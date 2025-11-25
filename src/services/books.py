@@ -613,5 +613,27 @@ class BookService():
                 "message": f"Error al buscar libros por formato: {str(e)}"
             }
 
-
-
+    def getAvailableSubGenres(self, user_level: str = None):
+        try:
+            if not user_level or user_level.strip() == "":
+                return {
+                    "error": True,
+                    "message": "INSTRUCCIÓN: Primero debes usar la herramienta 'whoIsHeIsUser' para obtener el nivel de lectura del usuario."
+                }
+            
+            allowed_levels = self.get_allowed_levels(user_level)
+            
+            if not allowed_levels:
+                return {
+                    "error": True,
+                    "message": f"El nivel '{user_level}' no es válido."
+                }
+            
+            subgenres = self.collectionBooks.distinct("subgenre", {"level": {"$in": allowed_levels}})
+            return list(subgenres)
+            
+        except Exception as e:
+            return {
+                "error": True,
+                "message": f"Error al obtener subgéneros: {str(e)}"
+            }
