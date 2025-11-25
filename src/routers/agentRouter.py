@@ -14,8 +14,8 @@ class AgentRouter():
 
     def __init__(self):
         self.router = APIRouter()
+        
         self.router.post("/agent")(self.chatWithAgent)
-        self.router.post("/chatBot")(self.chatWithAgent)
     
     
     async def chatWithAgent(self, body:MsgReqValidations):
