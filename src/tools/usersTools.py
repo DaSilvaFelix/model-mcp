@@ -15,11 +15,11 @@ def whoIsHeIsUser(config: RunnableConfig) -> str:
     user_id = configuration.get("userId")
     session_id = configuration.get("sessionId")
     
-    user = user_service.getUserById(user_id)
-    print(f"Usuario encontrado: {user}")
+    user, data = user_service.getUserById(user_id)
+    print(f"Usuario encontrado: {data}")
     
     if user:
-        return f"Usuario: {user}"
+        return f"Usuario: {data}"
     else:
         return f"No se encontró usuario con ID: {user_id}"
     

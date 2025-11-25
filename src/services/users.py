@@ -48,11 +48,14 @@ class UserService():
             subgéneros favoritos del usuario: {", ".join(user_result["preference"]["category"])}
             formato favorito del usuario: {", ".join(user_result["preference"]["format"])}
             """
-
-            return data
+            user = {
+                "nivel": user_result["nivel"],
+                "preference": user_result["preference"]
+            }
+            return user, data
         except Exception as e:
             print(f"Error buscando usuario: {e}")
-            return None
+            return None, None
     
     def getUserLevel(self, userId):
         """

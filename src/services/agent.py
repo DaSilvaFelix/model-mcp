@@ -12,7 +12,7 @@ class AgentService():
         self.tools = {t.name: t for t in mainTools}
     
     async def chat(self, body:MsgReqValidations, memory):
-        messages =  memory + [HumanMessage(content=body.msg)] + [SystemMessage(content=sysMsg)]
+        messages = [SystemMessage(content=sysMsg)] + memory + [HumanMessage(content=body.msg)]
         config = {"configurable": {"userId": body.userId, "sessionId": body.sessionId}}
         
         response = await self.model.ainvoke(messages, config=config)
