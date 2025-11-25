@@ -9,11 +9,6 @@ def convertMemoryToMessages(memory_data):
         if role == "user":
             messages.append(HumanMessage(content=text))
         elif role == "ai":
-            # Handle nested dictionary for AI messages if present
-            if isinstance(text, dict) and "message" in text:
-                content = text["message"]
-            else:
-                content = str(text)
-            messages.append(AIMessage(content=content))
+            messages.append(AIMessage(content=text))
             
     return messages
