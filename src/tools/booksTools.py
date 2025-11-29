@@ -13,7 +13,7 @@ def numberOfBooks():
     call_count = book_service.numberOfBooks()
     return f"El número de libros en la plataforma es: {call_count}"
 
-@tool(description="Devuelve los libros nuevos recien agregados a la plataforma o los mas nuevos, filtrados automáticamente por el nivel de lectura del usuario.")
+@tool(description="Devuelve los libros nuevos recién agregados a la plataforma o los mas nuevos, filtrados automáticamente por el nivel de lectura del usuario.")
 def getTheNewBooks(config: RunnableConfig, limit:int):
     try:
         configuration = config.get("configurable", {})
@@ -94,33 +94,6 @@ def getRecommendation(config: RunnableConfig, limit: int = 10):
     except Exception as e:
         return f"Error al obtener recomendaciones: {str(e)}"
 
-@tool(description="Busca libros de un género específico (Narrativo, Poesía, etc.). Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def getBooksByGenre(config: RunnableConfig, genre: Literal["Narrativo", "Poesía"] = "Narrativo", limit: int = 10):
-    try:
-        configuration = config.get("configurable", {})
-        user_id = configuration.get("userId")
-        
-        if not user_id:
-            return "Error: No se pudo identificar al usuario."
-        
-        user_level = user_service.getUserLevel(user_id)
-        
-        if not user_level:
-            return "Error: No se pudo obtener el nivel de lectura del usuario."
-        
-        books = book_service.getBooksByGenre(genre, user_level=user_level, limit=limit)
-        
-        if isinstance(books, dict) and books.get("error"):
-            return books.get("message")
-        
-        if not books or len(books) == 0:
-            return f"No se encontraron libros del género '{genre}' para tu nivel de lectura ({user_level})."
-        
-        return format_books_list(books, include_score=False)
-        
-    except Exception as e:
-        return f"Error al buscar libros por género: {str(e)}"
-
 @tool(description="Busca libros de un autor específico por su nombre. Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
 def getBooksByAuthor(config: RunnableConfig, author_name: str, limit: int = 10):
     try:
@@ -175,7 +148,7 @@ def getAvailableGenres(config: RunnableConfig):
     except Exception as e:
         return f"Error al obtener géneros: {str(e)}"
 
-@tool(description="Ontiene los subgeneros literarios disponibles en la plataforma para el nivel de lectura del usuario.")
+@tool(description="Obtiene los subgéneros literarios disponibles en la plataforma para el nivel de lectura del usuario.")
 def getAvailableSubGenres(config: RunnableConfig):
     try:
         configuration = config.get("configurable", {})

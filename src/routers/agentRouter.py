@@ -26,11 +26,8 @@ class AgentRouter():
         
         response = await self.agentService.chat(body, messages)
         
-        # Extraer el contenido de texto de la respuesta
-        # Gemini 2.5 puede retornar respuestas estructuradas
         content = response.content
         
-        # Si es una lista de objetos con estructura {type, text, extras}
         if isinstance(content, list):
             text_parts = []
             for part in content:
