@@ -21,7 +21,6 @@ class AuthorService():
             projection = { "score": { "$meta": "textScore" } }
             sort_order = [("score", { "$meta": "textScore" })]
             
-            # Limit to 1 as requested by user to get the most similar one
             authors = list(self.collection.find(query, projection).sort(sort_order).limit(1))
             
             return authors
