@@ -1,4 +1,16 @@
-
+def format_books_list(books: list, include_score: bool = False, page: int = 1, limit: int = 5) -> str:
+    if not books:
+        return "No se encontraron libros."
+    
+    formatted_books = [format_book_for_display(book, include_score) for book in books]
+    result = "\n\n".join(formatted_books)
+    
+    if len(books) >= limit:
+        result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+    else:
+        result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        
+    return result
 
 def format_book_for_display(book: dict, include_score: bool = False) -> str:
     authors = book.get("author", [])
@@ -23,14 +35,12 @@ def format_book_for_display(book: dict, include_score: bool = False) -> str:
     {score_info}
     Título: {book.get("title", "Sin título")}
     Autores: {authors_str}
-    Resumen: {book.get("summary", "Sin resumen")}
     Sinopsis: {book.get("synopsis", "Sin sinopsis")}
     Género: {book.get("genre", "No especificado")}
     Subgéneros: {subgenres_str}
     Temas: {themes_str}
     Nivel de lectura: {book.get("level", "No especificado")}
     Formato: {book.get("format", "No especificado")}
-    Extensión: {book.get("fileExtension", "No especificado")}
     Año de creación: {book.get("yearBook", "No especificado")}
     Páginas: {book.get("totalPages", "N/A")}
     Idioma: {book.get("language", "No especificado")}
@@ -38,14 +48,6 @@ def format_book_for_display(book: dict, include_score: bool = False) -> str:
     """.strip()
     
     return book_str
-
-
-def format_books_list(books: list, include_score: bool = False) -> list:
-    if not books:
-        return []
-    
-    return [format_book_for_display(book, include_score) for book in books]
-
 
 def sanitize_book_data(book: dict) -> dict:
     safe_fields = [

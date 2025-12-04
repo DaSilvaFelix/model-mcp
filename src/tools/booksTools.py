@@ -14,7 +14,7 @@ def numberOfBooks():
     return f"El número de libros en la plataforma es: {call_count}"
 
 @tool(description="Devuelve los libros nuevos recién agregados a la plataforma o los mas nuevos, filtrados automáticamente por el nivel de lectura del usuario.")
-def getTheNewBooks(config: RunnableConfig, limit:int):
+def getTheNewBooks(config: RunnableConfig, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -27,7 +27,7 @@ def getTheNewBooks(config: RunnableConfig, limit:int):
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario. Verifica que el usuario esté registrado correctamente."
         
-        newBooks = book_service.bookNew(user_level=user_level, limit=limit if limit is not None else 10)
+        newBooks = book_service.bookNew(user_level=user_level, limit=limit, page=page)
         
         if isinstance(newBooks, dict) and newBooks.get("error"):
             return newBooks.get("message")
@@ -35,13 +35,13 @@ def getTheNewBooks(config: RunnableConfig, limit:int):
         if not newBooks or len(newBooks) == 0:
             return f"No se encontraron libros nuevos para tu nivel de lectura ({user_level})."
         
-        return format_books_list(newBooks, include_score=False)
+        return format_books_list(newBooks, include_score=False, page=page, limit=limit)
         
     except Exception as e:
         return f"Error al obtener libros nuevos: {str(e)}"
 
 @tool(description="Busca libros por título, autor, género, tema, sinopsis o resumen. Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def searchBooks(config: RunnableConfig, query: list[str] | str, limit: int = 10):
+def searchBooks(config: RunnableConfig, query: list[str] | str, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -54,7 +54,7 @@ def searchBooks(config: RunnableConfig, query: list[str] | str, limit: int = 10)
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario. Verifica que el usuario esté registrado correctamente."
         
-        search_results = book_service.getBookByQuery(query, user_level=user_level, limit=limit)
+        search_results = book_service.getBookByQuery(query, user_level=user_level, limit=limit, page=page)
         
         if isinstance(search_results, dict) and search_results.get("error"):
             return search_results.get("message")
@@ -62,13 +62,13 @@ def searchBooks(config: RunnableConfig, query: list[str] | str, limit: int = 10)
         if not search_results or len(search_results) == 0:
             return f"No se encontraron libros que coincidan con tu búsqueda para tu nivel de lectura ({user_level})."
         
-        return format_books_list(search_results, include_score=True)
+        return format_books_list(search_results, include_score=True, page=page, limit=limit)
         
     except Exception as e:
         return f"Error al buscar libros: {str(e)}"
 
 @tool(description="Devuelve recomendaciones personalizadas de libros basadas en las preferencias del usuario actual.")
-def getRecommendation(config: RunnableConfig, limit: int = 10):
+def getRecommendation(config: RunnableConfig, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -81,7 +81,7 @@ def getRecommendation(config: RunnableConfig, limit: int = 10):
         if not user:
             return "Error: No se pudo obtener los datos del usuario. Verifica que el usuario esté registrado correctamente."
         
-        recommendations = book_service.getRecommendation(user, limit=limit)
+        recommendations = book_service.getRecommendation(user, limit=limit, page=page)
         
         if isinstance(recommendations, dict) and recommendations.get("error"):
             return recommendations.get("message")
@@ -89,13 +89,13 @@ def getRecommendation(config: RunnableConfig, limit: int = 10):
         if not recommendations or len(recommendations) == 0:
             return f"No se encontraron recomendaciones para las preferencias del usuario."
         
-        return format_books_list(recommendations, include_score=False)
+        return format_books_list(recommendations, include_score=False, page=page, limit=limit)
         
     except Exception as e:
         return f"Error al obtener recomendaciones: {str(e)}"
 
 @tool(description="Busca libros de un autor específico por su nombre. Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def getBooksByAuthor(config: RunnableConfig, author_name: str, limit: int = 10):
+def getBooksByAuthor(config: RunnableConfig, author_name: str, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -108,7 +108,7 @@ def getBooksByAuthor(config: RunnableConfig, author_name: str, limit: int = 10):
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario."
         
-        books = book_service.getBooksByAuthor(author_name, user_level=user_level, limit=limit)
+        books = book_service.getBooksByAuthor(author_name, user_level=user_level, limit=limit, page=page)
         
         if isinstance(books, dict) and books.get("error"):
             return books.get("message")
@@ -116,13 +116,13 @@ def getBooksByAuthor(config: RunnableConfig, author_name: str, limit: int = 10):
         if not books or len(books) == 0:
             return f"No se encontraron libros del autor '{author_name}' para tu nivel de lectura ({user_level})."
         
-        return format_books_list(books, include_score=False)
+        return format_books_list(books, include_score=False, page=page, limit=limit)
         
     except Exception as e:
         return f"Error al buscar libros por autor: {str(e)}"
 
 @tool(description="Obtiene la lista de géneros literarios disponibles en la plataforma para el nivel de lectura del usuario.")
-def getAvailableGenres(config: RunnableConfig):
+def getAvailableGenres(config: RunnableConfig, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -135,7 +135,7 @@ def getAvailableGenres(config: RunnableConfig):
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario."
         
-        genres = book_service.getAvailableGenres(user_level=user_level)
+        genres = book_service.getAvailableGenres(user_level=user_level, limit=limit, page=page)
         
         if isinstance(genres, dict) and genres.get("error"):
             return genres.get("message")
@@ -143,13 +143,18 @@ def getAvailableGenres(config: RunnableConfig):
         if not genres or len(genres) == 0:
             return "No se encontraron géneros disponibles."
         
-        return f"Géneros disponibles para tu nivel de lectura ({user_level}): {', '.join(genres)}"
+        result = f"Géneros disponibles para tu nivel de lectura ({user_level}): {', '.join(genres)}"
+        if len(genres) >= limit:
+            result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+        else:
+            result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        return result
         
     except Exception as e:
         return f"Error al obtener géneros: {str(e)}"
 
 @tool(description="Obtiene los subgéneros literarios disponibles en la plataforma para el nivel de lectura del usuario.")
-def getAvailableSubGenres(config: RunnableConfig):
+def getAvailableSubGenres(config: RunnableConfig, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -162,7 +167,7 @@ def getAvailableSubGenres(config: RunnableConfig):
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario."
         
-        subgenres = book_service.getAvailableSubGenres(user_level=user_level)
+        subgenres = book_service.getAvailableSubGenres(user_level=user_level, limit=limit, page=page)
         
         if isinstance(subgenres, dict) and subgenres.get("error"):
             return subgenres.get("message")
@@ -170,13 +175,18 @@ def getAvailableSubGenres(config: RunnableConfig):
         if not subgenres or len(subgenres) == 0:
             return "No se encontraron subgéneros disponibles."
         
-        return f"Subgéneros disponibles para tu nivel de lectura ({user_level}): {', '.join(subgenres)}"
+        result = f"Subgéneros disponibles para tu nivel de lectura ({user_level}): {', '.join(subgenres)}"
+        if len(subgenres) >= limit:
+            result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+        else:
+            result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        return result
         
     except Exception as e:
         return f"Error al obtener subgéneros: {str(e)}"
 
 @tool(description="Obtiene los autores más populares (con más libros publicados) en la plataforma para el nivel de lectura del usuario.")
-def getPopularAuthors(config: RunnableConfig, limit: int = 10):
+def getPopularAuthors(config: RunnableConfig, limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -189,7 +199,7 @@ def getPopularAuthors(config: RunnableConfig, limit: int = 10):
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario."
         
-        authors = book_service.getPopularAuthors(user_level=user_level, limit=limit)
+        authors = book_service.getPopularAuthors(user_level=user_level, limit=limit, page=page)
         
         if isinstance(authors, dict) and authors.get("error"):
             return authors.get("message")
@@ -201,13 +211,18 @@ def getPopularAuthors(config: RunnableConfig, limit: int = 10):
         for author in authors:
             authors_formatted.append(f"{author.get('author', 'Desconocido')} - {author.get('bookCount', 0)} libros")
         
-        return f"Autores más populares para tu nivel de lectura ({user_level}):\n" + "\n".join(authors_formatted)
+        result = f"Autores más populares para tu nivel de lectura ({user_level}):\n" + "\n".join(authors_formatted)
+        if len(authors) >= limit:
+            result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+        else:
+            result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        return result
         
     except Exception as e:
         return f"Error al obtener autores populares: {str(e)}"
 
 @tool(description="Busca libros por formato (ebook, videobook, audiobook). Los resultados se filtran automáticamente por el nivel de lectura del usuario.")
-def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "videobook", "audiobook"] = "ebook", limit: int = 10):
+def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "videobook", "audiobook"] = "ebook", limit: int = 5, page: int = 1):
     try:
         configuration = config.get("configurable", {})
         user_id = configuration.get("userId")
@@ -220,7 +235,7 @@ def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "vide
         if not user_level:
             return "Error: No se pudo obtener el nivel de lectura del usuario."
         
-        books = book_service.getBooksByFormat(format_type, user_level=user_level, limit=limit)
+        books = book_service.getBooksByFormat(format_type, user_level=user_level, limit=limit, page=page)
         
         if isinstance(books, dict) and books.get("error"):
             return books.get("message")
@@ -228,7 +243,7 @@ def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "vide
         if not books or len(books) == 0:
             return f"No se encontraron libros en formato '{format_type}' para tu nivel de lectura ({user_level})."
         
-        return format_books_list(books, include_score=False)
+        return format_books_list(books, include_score=False, page=page, limit=limit)
         
     except Exception as e:
         return f"Error al buscar libros por formato: {str(e)}"

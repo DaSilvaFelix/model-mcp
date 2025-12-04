@@ -10,13 +10,13 @@ def countAuthors():
     return f"Total de autores registrados: {count}"
 
 @tool(description="Busca y devuelve los detalles de un autor específico por su nombre o palabras clave.")
-def getAuthorDetails(names: list[str]):
-    authors = author_service.getAuthorDetailsByName(names)
-    return format_author_list(authors)
+def getAuthorDetails(names: list[str], limit: int = 5, page: int = 1):
+    authors = author_service.getAuthorDetailsByName(names, limit=limit, page=page)
+    return format_author_list(authors, page=page, limit=limit)
 
 @tool(description="Devuelve la lista de todos los nombres de autores disponibles en la plataforma.")
-def getAllAuthorNames():
-    authors = author_service.getAllAuthorNames()
-    return format_author_names_list(authors)
+def getAllAuthorNames(limit: int = 5, page: int = 1):
+    authors = author_service.getAllAuthorNames(limit=limit, page=page)
+    return format_author_names_list(authors, page=page, limit=limit)
 
 

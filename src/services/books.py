@@ -25,7 +25,7 @@ class BookService():
     def numberOfBooks(self):
         return self.collectionBooks.count_documents({})
 
-    def bookNew(self, user_level:str, limit=10):
+    def bookNew(self, user_level:str, limit:int=5, page:int=1):
         try:
             if not user_level or user_level.strip() == "":
                 return {
@@ -55,7 +55,7 @@ class BookService():
                     "bookCoverImage": 0,
                     "__v": 0,
                 }
-            ).sort("createdAt", -1).limit(limit)
+            ).sort("createdAt", -1).skip((page - 1) * limit).limit(limit)
 
             data_list = list(bookNew)
         
@@ -85,7 +85,7 @@ class BookService():
                 "message": f"Error al buscar libros: {str(e)}. Verifica que hayas usado 'whoIsHeIsUser' para obtener el nivel de lectura del usuario primero."
             }
 
-    def getBookByQuery(self, query, user_level=None, limit=10):
+    def getBookByQuery(self, query, limit:int=5, page:int=1, user_level=None):
         try:
             if not user_level or user_level.strip() == "":
                 return {
@@ -153,6 +153,7 @@ class BookService():
                         }
                     }
                 },
+                {"$skip": (page - 1) * limit},
                 {"$limit": limit}
             ]
             
@@ -227,6 +228,7 @@ class BookService():
                         }
                     },
                     {"$sort": {"createdAt": -1}},
+                    {"$skip": (page - 1) * limit},
                     {"$limit": limit}
                 ]
                 
@@ -246,7 +248,7 @@ class BookService():
                 "message": f"Error al buscar libros: {str(e)}. Verifica que hayas usado 'whoIsHeIsUser' para obtener el nivel de lectura del usuario primero."
             }
 
-    def getRecommendation(self, user, limit=10):
+    def getRecommendation(self, user, limit:int=5, page:int=1):
         try:
             if not user or "nivel" not in user:
                 return {
@@ -303,6 +305,9 @@ class BookService():
                 },
                 {
                     "$sort": {"totalScore": -1, "stock": -1}
+                },
+                {
+                    "$skip": (page - 1) * limit
                 },
                 {
                     "$limit": limit
@@ -362,61 +367,7 @@ class BookService():
                 "message": f"Error al obtener recomendaciones: {str(e)}. Verifica que hayas usado 'whoIsHeIsUser' para obtener los datos del usuario primero."
             }
 
-    def getBooksByGenre(self, genre: str, user_level: str = None, limit: int = 10):
-        try:
-            if not user_level or user_level.strip() == "":
-                return {
-                    "error": True,
-                    "message": "INSTRUCCIÓN: Primero debes usar la herramienta 'whoIsHeIsUser' para obtener el nivel de lectura del usuario."
-                }
-            
-            allowed_levels = self.get_allowed_levels(user_level)
-            
-            if not allowed_levels:
-                return {
-                    "error": True,
-                    "message": f"El nivel '{user_level}' no es válido."
-                }
-            
-            books = list(self.collectionBooks.find(
-                {
-                    "genre": {"$regex": genre, "$options": "i"},
-                    "level": {"$in": allowed_levels}
-                },
-                {
-                    "_id": 0,
-                    "contentBook": 0,
-                    "bookCoverImage": 0,
-                    "__v": 0,
-                    "available": 0,
-                    "updatedAt": 0
-                }
-            ).limit(limit))
-            
-            for book in books:
-                if "author" in book and isinstance(book["author"], list):
-                    author_names = []
-                    for author_id in book["author"]:
-                        author = self.collectionAuthors.find_one(
-                            {"_id": author_id},
-                            {"fullName": 1, "_id": 0}
-                        )
-                        if author and "fullName" in author:
-                            author_names.append(author["fullName"])
-                    book["author"] = author_names
-                
-                if "createdAt" in book and book["createdAt"]:
-                    book["createdAt"] = book["createdAt"].strftime("%Y-%m-%d")
-            
-            return books
-            
-        except Exception as e:
-            return {
-                "error": True,
-                "message": f"Error al buscar libros por género: {str(e)}"
-            }
-
-    def getBooksByAuthor(self, author_name: str, user_level: str = None, limit: int = 10):
+    def getBooksByAuthor(self, author_name: str, user_level: str = None, limit: int = 5, page: int = 1):
         """Obtiene libros de un autor específico filtrados por nivel de usuario."""
         try:
             if not user_level or user_level.strip() == "":
@@ -458,7 +409,7 @@ class BookService():
                     "available": 0,
                     "updatedAt": 0
                 }
-            ).limit(limit))
+            ).skip((page - 1) * limit).limit(limit))
             
             for book in books:
                 if "author" in book and isinstance(book["author"], list):
@@ -483,7 +434,7 @@ class BookService():
                 "message": f"Error al buscar libros por autor: {str(e)}"
             }
 
-    def getAvailableGenres(self, user_level: str = None):
+    def getAvailableGenres(self, user_level: str = None, limit: int = 5, page: int = 1):
         """Obtiene la lista de géneros disponibles para el nivel del usuario."""
         try:
             if not user_level or user_level.strip() == "":
@@ -501,7 +452,11 @@ class BookService():
                 }
             
             genres = self.collectionBooks.distinct("genre", {"level": {"$in": allowed_levels}})
-            return list(genres)
+            
+            # Pagination for list
+            start = (page - 1) * limit
+            end = start + limit
+            return list(genres)[start:end]
             
         except Exception as e:
             return {
@@ -509,7 +464,7 @@ class BookService():
                 "message": f"Error al obtener géneros: {str(e)}"
             }
 
-    def getPopularAuthors(self, user_level: str = None, limit: int = 10):
+    def getPopularAuthors(self, user_level: str = None, limit: int = 5, page: int = 1):
         """Obtiene los autores más populares (con más libros) para el nivel del usuario."""
         try:
             if not user_level or user_level.strip() == "":
@@ -534,6 +489,7 @@ class BookService():
                     "bookCount": {"$sum": 1}
                 }},
                 {"$sort": {"bookCount": -1}},
+                {"$skip": (page - 1) * limit},
                 {"$limit": limit},
                 {"$lookup": {
                     "from": "authormodels",
@@ -558,7 +514,7 @@ class BookService():
                 "message": f"Error al obtener autores populares: {str(e)}"
             }
 
-    def getBooksByFormat(self, format_type: str, user_level: str = None, limit: int = 10):
+    def getBooksByFormat(self, format_type: str, user_level: str = None, limit: int = 5, page: int = 1):
         """Obtiene libros filtrados por formato (ebook, físico, etc.) y nivel de usuario."""
         try:
             if not user_level or user_level.strip() == "":
@@ -588,7 +544,7 @@ class BookService():
                     "available": 0,
                     "updatedAt": 0
                 }
-            ).limit(limit))
+            ).skip((page - 1) * limit).limit(limit))
             
             for book in books:
                 if "author" in book and isinstance(book["author"], list):
@@ -613,7 +569,7 @@ class BookService():
                 "message": f"Error al buscar libros por formato: {str(e)}"
             }
 
-    def getAvailableSubGenres(self, user_level: str = None):
+    def getAvailableSubGenres(self, user_level: str = None, limit: int = 5, page: int = 1):
         try:
             if not user_level or user_level.strip() == "":
                 return {
@@ -630,7 +586,11 @@ class BookService():
                 }
             
             subgenres = self.collectionBooks.distinct("subgenre", {"level": {"$in": allowed_levels}})
-            return list(subgenres)
+            
+            # Pagination for list
+            start = (page - 1) * limit
+            end = start + limit
+            return list(subgenres)[start:end]
             
         except Exception as e:
             return {

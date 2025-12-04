@@ -1,29 +1,22 @@
-def format_author_list(authors):
+def format_author_list(authors, page: int = 1, limit: int = 5):
     if not authors:
         return "No se encontraron autores con esa búsqueda."
 
     formatted_texts = []
 
     for author in authors:
-        # 1. Manejo seguro de listas (ej: Géneros)
         genres = author.get('writingGenre', [])
         genres_str = ", ".join(genres) if isinstance(genres, list) else str(genres)
-
-        # 2. Manejo de fechas (birthdate)
         birthdate_raw = author.get('birthdate')
         birthdate_str = "No especificada"
         if birthdate_raw:
             if isinstance(birthdate_raw, dict) and '$date' in birthdate_raw:
-                # Caso: Formato extendido JSON { "$date": "..." }
                 birthdate_str = birthdate_raw['$date'].split('T')[0]
             elif hasattr(birthdate_raw, 'strftime'):
-                # Caso: Objeto datetime de Python (PyMongo estándar)
                 birthdate_str = birthdate_raw.strftime('%Y-%m-%d')
             else:
-                # Caso: String u otro
                 birthdate_str = str(birthdate_raw).split('T')[0]
 
-        # 3. Construcción del bloque de texto
         author_block = (
             f"Nombre: {author.get('fullName', 'Desconocido')}\n"
             f"Profesión: {author.get('profession', 'No especificada')}\n"
@@ -37,10 +30,24 @@ def format_author_list(authors):
         formatted_texts.append(author_block)
 
     # Unimos todos los bloques con un salto de línea extra
-    return "\n".join(formatted_texts)
+    result = "\n".join(formatted_texts)
+    
+    if len(authors) >= limit:
+        result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+    else:
+        result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        
+    return result
 
-def format_author_names_list(names):
+def format_author_names_list(names, page: int = 1, limit: int = 5):
     if not names:
         return "No se encontraron nombres de autores."
     
-    return "Autores disponibles:\n" + "\n".join([f"- {name}" for name in names])
+    result = "Autores disponibles:\n" + "\n".join([f"- {name}" for name in names])
+    
+    if len(names) >= limit:
+        result += f"\n\n--- Página {page} ---\n(Para ver más resultados, solicita la página {page + 1})"
+    else:
+        result += f"\n\n--- Página {page} (Fin de los resultados) ---"
+        
+    return result

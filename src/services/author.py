@@ -5,7 +5,7 @@ class AuthorService():
         self.db = connect()
         self.collection = self.db["authormodels"]
         
-    def getAuthorDetailsByName(self, keywords: list[str]):
+    def getAuthorDetailsByName(self, keywords: list[str], limit: int = 5, page: int = 1):
         try:
             if not keywords:
                 return []
@@ -21,17 +21,21 @@ class AuthorService():
             projection = { "score": { "$meta": "textScore" } }
             sort_order = [("score", { "$meta": "textScore" })]
             
-            authors = list(self.collection.find(query, projection).sort(sort_order).limit(1))
+            authors = list(self.collection.find(query, projection).sort(sort_order).skip((page - 1) * limit).limit(limit))
             
             return authors
         except Exception as e:
             print(f"Error in getAuthorDetailsByName: {e}")
             return []
 
-    def getAllAuthorNames(self):
+    def getAllAuthorNames(self, limit: int = 5, page: int = 1):
         try:
             authors = list(self.collection.distinct("fullName"))
-            return authors
+            
+            # Pagination for list
+            start = (page - 1) * limit
+            end = start + limit
+            return authors[start:end]
         except Exception as e:
             print(f"Error in getAllAuthorNames: {e}")
             return []
