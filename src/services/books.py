@@ -597,3 +597,69 @@ class BookService():
                 "error": True,
                 "message": f"Error al obtener subgéneros: {str(e)}"
             }
+
+    def getRandomBook(self, user_level: str = None):
+        """Obtiene un libro aleatorio adecuado para el nivel del usuario."""
+        try:
+            if not user_level or user_level.strip() == "":
+                return {
+                    "error": True,
+                    "message": "INSTRUCCIÓN: Primero debes usar la herramienta 'whoIsHeIsUser' para obtener el nivel de lectura del usuario."
+                }
+            
+            allowed_levels = self.get_allowed_levels(user_level)
+            
+            pipeline = [
+                {"$match": {"level": {"$in": allowed_levels}}},
+                {"$sample": {"size": 1}},
+                {
+                    "$lookup": {
+                        "from": "authormodels",
+                        "localField": "author",
+                        "foreignField": "_id",
+                        "as": "authorData"
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "title": 1,
+                        "summary": 1,
+                        "genre": 1,
+                        "author": {
+                            "$map": {
+                                "input": "$authorData",
+                                "as": "a",
+                                "in": "$$a.fullName"
+                            }
+                        }
+                    }
+                }
+            ]
+            
+            books = list(self.collectionBooks.aggregate(pipeline))
+            return books[0] if books else None
+            
+        except Exception as e:
+            return {
+                "error": True,
+                "message": f"Error al obtener libro aleatorio: {str(e)}"
+            }
+
+    def getPlatformStats(self):
+        """Obtiene estadísticas generales de la plataforma."""
+        try:
+            total_books = self.collectionBooks.count_documents({})
+            total_authors = self.collectionAuthors.count_documents({})
+            genres = len(self.collectionBooks.distinct("genre"))
+            
+            return {
+                "total_books": total_books,
+                "total_authors": total_authors,
+                "total_genres": genres
+            }
+        except Exception as e:
+            return {
+                "error": True,
+                "message": f"Error al obtener estadísticas: {str(e)}"
+            }

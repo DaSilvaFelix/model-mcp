@@ -248,3 +248,46 @@ def getBooksByFormat(config: RunnableConfig, format_type: Literal["ebook", "vide
     except Exception as e:
         return f"Error al buscar libros por formato: {str(e)}"
 
+@tool(description="Devuelve un libro aleatorio de la plataforma, adecuado para el nivel de lectura del usuario.")
+def getRandomBook(config: RunnableConfig):
+    try:
+        configuration = config.get("configurable", {})
+        user_id = configuration.get("userId")
+        
+        if not user_id:
+            return "Error: No se pudo identificar al usuario."
+        
+        user_level = user_service.getUserLevel(user_id)
+        
+        if not user_level:
+            return "Error: No se pudo obtener el nivel de lectura del usuario."
+        
+        book = book_service.getRandomBook(user_level=user_level)
+        
+        if isinstance(book, dict) and book.get("error"):
+            return book.get("message")
+        
+        if not book:
+            return "No se pudo encontrar un libro aleatorio."
+        
+        authors = ", ".join(book.get("author", []))
+        return f"¡Aquí tienes un libro sorpresa!\n\nTítulo: {book.get('title')}\nAutor: {authors}\nGénero: {book.get('genre')}\nResumen: {book.get('summary')}"
+        
+    except Exception as e:
+        return f"Error al obtener libro aleatorio: {str(e)}"
+
+@tool(description="Devuelve estadísticas generales de la plataforma (total de libros, autores, géneros).")
+def getPlatformStats():
+    try:
+        stats = book_service.getPlatformStats()
+        
+        if isinstance(stats, dict) and stats.get("error"):
+            return stats.get("message")
+        
+        return (f"Estadísticas de Tintas Formoseñas:\n"
+                f"- Total de libros: {stats.get('total_books')}\n"
+                f"- Total de autores: {stats.get('total_authors')}\n"
+                f"- Variedad de géneros: {stats.get('total_genres')}")
+        
+    except Exception as e:
+        return f"Error al obtener estadísticas: {str(e)}"

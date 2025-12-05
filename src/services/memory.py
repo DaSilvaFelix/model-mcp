@@ -17,7 +17,6 @@ class MemoryService():
         return []
 
     def saveMemory(self, user_id, session_id, user_message, ai_message):
-        # Check if session exists
         existing_session = self.collection.find_one({"userId": user_id, "sessionId": session_id})
         
         new_messages = [
